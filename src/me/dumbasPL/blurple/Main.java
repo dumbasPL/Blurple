@@ -100,19 +100,22 @@ public class Main extends JFrame {
 		panel_1.add(lblSensitivity, BorderLayout.WEST);
 
 		JSlider slider = new JSlider();
+		slider.setMaximum(512);
 		slider.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				if (e.getSource() instanceof JSlider) {
-					prev.repaint();
+					if (prev != null)
+						prev.repaint();
 				}
 			}
 		});
-		slider.setMinorTickSpacing(5);
-		slider.setMajorTickSpacing(10);
+		slider.setMinorTickSpacing(8);
+		slider.setMajorTickSpacing(32);
 		slider.setPaintTicks(true);
 		slider.setPaintLabels(true);
 		panel_1.add(slider, BorderLayout.CENTER);
+		slider.setValue(256);
 
 		JButton btnSaveAs = new JButton("save as");
 		btnSaveAs.addActionListener(new ActionListener() {
@@ -179,7 +182,6 @@ public class Main extends JFrame {
 	}
 
 	public BufferedImage applyBlue(BufferedImage i, int p) {
-		int val = map(p, 0, 100, 0, 512);
 		int[] data = i.getRGB(0, 0, i.getWidth(), i.getHeight(), null, 0, i.getWidth());
 		for (int j = 0; j < data.length; j++) {
 			int color = data[j];
@@ -187,7 +189,7 @@ public class Main extends JFrame {
 			int g = (color >> 8) & 0xff;
 			int b = color & 0xff;
 			int av = (r + g + b) / 3;
-			av += val - 255;
+			av += p - 255;
 			if (invertCB.isSelected())
 				av = map(av, 0, 255, 255, 0);
 			data[j] = getBlurple(av);
