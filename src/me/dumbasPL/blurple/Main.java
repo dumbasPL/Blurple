@@ -186,9 +186,11 @@ public class Main extends JFrame {
 			int r = (color >> 16) & 0xff;
 			int g = (color >> 8) & 0xff;
 			int b = color & 0xff;
-			int average = (r + g + b) / 3;
-			average += val - 255;
-			data[j] = getBlurple(average);
+			int av = (r + g + b) / 3;
+			av += val - 255;
+			if (invertCB.isSelected())
+				av = map(av, 0, 255, 255, 0);
+			data[j] = getBlurple(av);
 		}
 		i.setRGB(0, 0, i.getWidth(), i.getHeight(), data, 0, i.getWidth());
 		return i;
