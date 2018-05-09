@@ -1,7 +1,6 @@
 package me.dumbasPL.blurple;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -76,6 +75,7 @@ public class Main extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
+				fc.setCurrentDirectory(new File("."));
 				if (fc.showOpenDialog(Main.this) == JFileChooser.APPROVE_OPTION) {
 					File f = fc.getSelectedFile();
 					try {
@@ -120,6 +120,7 @@ public class Main extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				BufferedImage b = applyBlue(copyImage(bi), slider.getValue());
 				JFileChooser fc = new JFileChooser();
+				fc.setCurrentDirectory(new File("."));
 				if (fc.showSaveDialog(Main.this) == JFileChooser.APPROVE_OPTION) {
 					File f = fc.getSelectedFile();
 					if (!f.getName().endsWith(".png")) {
@@ -171,7 +172,6 @@ public class Main extends JFrame {
 		double scale = Math.min(scalex, scaley);
 		int ww = (int) (iw * scale);
 		int hh = (int) (ih * scale);
-
 		BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		g.clearRect(0, 0, w, h);
 		g.drawImage(applyBlue(copyImage(bi), val), 0, 0, ww, hh, null);
@@ -179,20 +179,48 @@ public class Main extends JFrame {
 	}
 
 	public BufferedImage applyBlue(BufferedImage i, int p) {
-		Color blurple = new Color(114, 137, 218);
-		Color white = new Color(255, 255, 255);
-		int val = map(p, 0, 100, 0, 255);
+		int val = map(p, 0, 100, 0, 512);
 		int[] data = i.getRGB(0, 0, i.getWidth(), i.getHeight(), null, 0, i.getWidth());
 		for (int j = 0; j < data.length; j++) {
 			int color = data[j];
-			int blue = color & 0xff;
-			int green = (color & 0xff00) >> 8;
-			int red = (color & 0xff0000) >> 16;
-			int brightness = (int) (0.2126 * red + 0.7152 * green + 0.0722 * blue);
-			data[j] = brightness <= val ^ invertCB.isSelected() ? blurple.getRGB() : white.getRGB();
+			int r = (color >> 16) & 0xff;
+			int g = (color >> 8) & 0xff;
+			int b = color & 0xff;
+			int average = (r + g + b) / 3;
+			average += val - 255;
+			data[j] = getBlurple(average);
 		}
 		i.setRGB(0, 0, i.getWidth(), i.getHeight(), data, 0, i.getWidth());
 		return i;
+	}
+
+	private static Color whiteColor = new Color(255, 255, 255);
+	private static Color darkColor = new Color(78, 93, 148);
+	private static Color blurpleColor = new Color(114, 137, 218);
+
+	private static int getBlurple(int cc) {
+		Color color = new Color(cc, cc, cc);
+		int white = difference(whiteColor, color);
+		if (white < 0)
+			white = white * -1;
+		int blurple = difference(blurpleColor, color);
+		if (blurple < 0)
+			blurple = blurple * -1;
+		int dark = difference(darkColor, color);
+		if (dark < 0)
+			dark = dark * -1;
+		if (white < blurple) {
+			if (white < dark)
+				return whiteColor.getColor();
+			else if (dark < blurple)
+				return darkColor.getColor();
+		} else if (blurple < dark)
+			return blurpleColor.getColor();
+		return darkColor.getColor();
+	}
+
+	private static int difference(Color primary, Color color) {
+		return (primary.red - color.red) + (primary.green - color.green) + (primary.blue - color.blue);
 	}
 
 	public static BufferedImage copyImage(BufferedImage source) {
